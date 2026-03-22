@@ -1,0 +1,288 @@
+{% extends 'marketplace/base.html' %}
+{% load static %}
+
+{% block title %}KisanBazaar — Fresh Crops, Direct from Farmers 🌾{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<div class="rounded-3xl overflow-hidden mb-10 shadow-2xl"
+     style="background: linear-gradient(135deg, #14532d 0%, #166534 50%, #15803d 100%);">
+  <div class="px-6 py-12 sm:px-12 sm:py-16 lg:px-20 lg:py-20 text-center">
+
+    <!-- Pure emoji — no external image needed -->
+    <p class="text-7xl sm:text-8xl mb-4 select-none leading-none">🌾</p>
+
+    <h1 class="brand-font text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
+      Fresh Crops,<br class="hidden sm:block" />Direct from Farmers
+    </h1>
+    <p class="text-green-200 text-lg sm:text-xl lg:text-2xl mb-10 max-w-2xl mx-auto leading-relaxed">
+      No middlemen. No markup.<br class="sm:hidden" /> Real prices, straight from the field.
+    </p>
+
+    <!-- Search bar -->
+    <form method="GET" action="{% url 'home' %}"
+          class="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto mb-8">
+      <input
+        type="text"
+        name="q"
+        value="{{ query|default_if_none:'' }}"
+        placeholder="🔍 Search crops… Tomato, Rice, Wheat"
+        class="flex-1 rounded-2xl px-5 py-4 text-lg font-medium text-gray-800
+               focus:outline-none focus:ring-4 focus:ring-yellow-400 bg-white shadow-lg"
+      />
+      <select
+        name="location"
+        class="rounded-2xl px-4 py-4 text-lg font-medium text-gray-800
+               focus:outline-none focus:ring-4 focus:ring-yellow-400 bg-white sm:w-52 shadow-lg"
+      >
+        <option value="">📍 All Locations</option>
+        {% for loc in locations %}
+          <option value="{{ loc }}" {% if loc == location %}selected{% endif %}>{{ loc }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit"
+              class="bg-yellow-400 hover:bg-yellow-300 text-green-900 font-extrabold
+                     rounded-2xl px-8 py-4 text-lg transition shrink-0 shadow-lg">
+        Search
+      </button>
+    </form>
+
+    {% if not user.is_authenticated %}
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="{% url 'register' %}"
+         class="inline-flex items-center justify-center gap-2 bg-white hover:bg-green-50
+                text-green-800 font-extrabold text-lg rounded-2xl px-8 py-4 shadow-xl transition">
+        🧑‍🌾 I'm a Farmer — Sell Now
+      </a>
+      <a href="{% url 'login' %}"
+         class="inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300
+                text-green-900 font-extrabold text-lg rounded-2xl px-8 py-4 shadow-xl transition">
+        🛒 I'm a Buyer — Login
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ STATS ═══════════════════════ -->
+<div class="grid grid-cols-3 gap-4 sm:gap-6 mb-10">
+  <div class="bg-white rounded-3xl border-2 border-green-200 shadow-sm p-5 sm:p-8 text-center">
+    <p class="brand-font text-4xl sm:text-6xl font-black text-green-700">{{ total_farmers }}</p>
+    <p class="text-gray-500 font-bold text-sm sm:text-lg mt-1 sm:mt-2">🧑‍🌾 Farmers Selling</p>
+  </div>
+  <div class="bg-white rounded-3xl border-2 border-green-200 shadow-sm p-5 sm:p-8 text-center">
+    <p class="brand-font text-4xl sm:text-6xl font-black text-green-700">{{ total_listings }}</p>
+    <p class="text-gray-500 font-bold text-sm sm:text-lg mt-1 sm:mt-2">🌾 Crops Listed</p>
+  </div>
+  <div class="bg-white rounded-3xl border-2 border-green-200 shadow-sm p-5 sm:p-8 text-center">
+    <p class="brand-font text-4xl sm:text-6xl font-black text-green-700">{{ total_buyers }}</p>
+    <p class="text-gray-500 font-bold text-sm sm:text-lg mt-1 sm:mt-2">🛒 Active Buyers</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ FRESHNESS LEGEND ═══════════════════════ -->
+<div class="flex flex-wrap gap-2 mb-6 items-center">
+  <span class="text-sm font-semibold text-gray-500 mr-1 hidden sm:inline">Freshness:</span>
+  <span class="badge-fresh  rounded-full px-3 py-1 text-xs font-bold">🟢 Fresh (5+ days)</span>
+  <span class="badge-warning rounded-full px-3 py-1 text-xs font-bold">🟡 Buy Soon (3–4 days)</span>
+  <span class="badge-critical rounded-full px-3 py-1 text-xs font-bold">🔴 Spoiling (1–2 days)</span>
+  <span class="badge-expired  rounded-full px-3 py-1 text-xs font-bold">⚫ Expired</span>
+</div>
+
+<!-- ═══════════════════════ PRODUCT GRID ═══════════════════════ -->
+{% if product_data %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+
+    {% for item in product_data %}
+    {% with p=item.product days=item.days urgency=item.urgency emoji=item.emoji %}
+
+      {% if urgency == 'critical' %}
+        <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-red-400 flex flex-col">
+      {% elif urgency == 'warning' %}
+        <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-yellow-400 flex flex-col">
+      {% elif urgency == 'expired' %}
+        <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-gray-300 flex flex-col opacity-70">
+      {% else %}
+        <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-green-300 flex flex-col">
+      {% endif %}
+
+        {% if p.image %}
+          <div class="w-full h-48 overflow-hidden bg-gray-50">
+            <img src="{{ p.image.url }}"
+                 alt="{{ p.crop_name }}"
+                 class="w-full h-full object-cover"
+                 onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0fdf4\'><span style=\'font-size:4rem;line-height:1\'>{{ emoji }}</span><span style=\'font-size:.75rem;color:#9ca3af;margin-top:.5rem\'>No photo</span></div>'"
+            />
+          </div>
+        {% else %}
+          <!-- Pure emoji placeholder — zero external requests -->
+          <div class="w-full h-48 flex flex-col items-center justify-center
+                      {% if urgency == 'critical' %}bg-red-50
+                      {% elif urgency == 'warning' %}bg-yellow-50
+                      {% elif urgency == 'expired' %}bg-gray-100
+                      {% else %}bg-green-50{% endif %}">
+            <span class="text-7xl drop-shadow leading-none">{{ emoji }}</span>
+            <span class="text-xs text-gray-400 mt-2 font-semibold bg-white/80 px-3 py-0.5 rounded-full">
+              No photo
+            </span>
+          </div>
+        {% endif %}
+
+        <div class="p-5 flex flex-col flex-1">
+
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h2 class="brand-font text-2xl font-bold text-gray-800 leading-tight">
+              {{ p.crop_name }}
+            </h2>
+            {% if urgency == 'critical' %}
+              <span class="badge-critical rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap shrink-0">🔴 {{ days }}d</span>
+            {% elif urgency == 'warning' %}
+              <span class="badge-warning rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap shrink-0">🟡 {{ days }}d</span>
+            {% elif urgency == 'expired' %}
+              <span class="badge-expired rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap shrink-0">⚫ Expired</span>
+            {% else %}
+              <span class="badge-fresh rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap shrink-0">🟢 {{ days }}d</span>
+            {% endif %}
+          </div>
+
+          <div class="flex items-baseline gap-1 mb-3">
+            <span class="brand-font text-3xl font-extrabold text-green-700">₹{{ p.price }}</span>
+            <span class="text-gray-400 text-sm">/ kg</span>
+          </div>
+
+          <p class="text-gray-600 text-base mb-1">📦 <span class="font-semibold">{{ p.quantity }} kg</span> available</p>
+          <p class="text-gray-500 text-base mb-1">📍 {{ p.location|default_if_none:"Location unknown" }}</p>
+          <p class="text-gray-500 text-base mb-5">
+            🧑‍🌾 {{ p.farmer.username|default_if_none:"Unknown" }}
+            {% if p.farmer.phone %}&nbsp;·&nbsp;📞 {{ p.farmer.phone }}{% endif %}
+          </p>
+
+          <div class="mt-auto">
+            {% if urgency == 'expired' %}
+              <span class="block w-full text-center bg-gray-200 text-gray-500 font-extrabold text-base rounded-2xl py-3.5 cursor-not-allowed select-none">
+                ⚫ No Longer Available
+              </span>
+            {% elif urgency == 'critical' %}
+              <a href="https://wa.me/91{{ p.farmer.phone|default:'' }}?text=Hi!%20I%20saw%20your%20{{ p.crop_name|urlencode }}%20on%20KisanBazaar.%20Is%20it%20still%20available%3F"
+                 target="_blank" rel="noopener noreferrer"
+                 class="flex items-center justify-center gap-2 w-full bg-red-500 hover:bg-red-600
+                        text-white font-extrabold text-base rounded-2xl py-3.5 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Chat Now — Spoiling Soon!
+              </a>
+            {% else %}
+              <a href="https://wa.me/91{{ p.farmer.phone|default:'' }}?text=Hi!%20I%20saw%20your%20{{ p.crop_name|urlencode }}%20on%20KisanBazaar.%20Is%20it%20still%20available%3F"
+                 target="_blank" rel="noopener noreferrer"
+                 class="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600
+                        text-white font-extrabold text-base rounded-2xl py-3.5 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Chat on WhatsApp
+              </a>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+
+    {% endwith %}
+    {% endfor %}
+
+  </div>
+
+{% else %}
+
+  <div class="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-green-200 shadow-sm mb-16">
+    <p class="text-8xl mb-4">🌱</p>
+    <h2 class="brand-font text-3xl font-extrabold text-gray-600 mb-2">No crops found</h2>
+    <p class="text-lg text-gray-400">Try a different search or check back soon!</p>
+  </div>
+
+{% endif %}
+
+<!-- ═══════════════════════ TIPS ═══════════════════════ -->
+<div class="bg-green-50 rounded-3xl border border-green-200 px-6 py-12 sm:px-10 sm:py-14 mb-4">
+
+  <div class="text-center mb-10">
+    <h2 class="brand-font text-3xl sm:text-4xl font-black text-green-800">💡 Tips for Farmers</h2>
+    <p class="text-gray-500 text-lg mt-2">Simple steps to sell more and earn more</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100 flex flex-col gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-4xl shrink-0">📸</div>
+      <div>
+        <h3 class="brand-font text-xl font-black text-gray-800 mb-2">Add a Photo</h3>
+        <p class="text-gray-600 text-base leading-relaxed">
+          Listings with a clear photo get <strong class="text-green-700">3 times more buyers</strong>.
+          Use morning sunlight and place the crop on a clean surface.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100 flex flex-col gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-yellow-100 flex items-center justify-center text-4xl shrink-0">📅</div>
+      <div>
+        <h3 class="brand-font text-xl font-black text-gray-800 mb-2">List on Harvest Day</h3>
+        <p class="text-gray-600 text-base leading-relaxed">
+          Fresh listings appear higher in search. List your crop
+          <strong class="text-green-700">the same day you harvest</strong> to reach the most buyers.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100 flex flex-col gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-4xl shrink-0">📞</div>
+      <div>
+        <h3 class="brand-font text-xl font-black text-gray-800 mb-2">Add Your Phone Number</h3>
+        <p class="text-gray-600 text-base leading-relaxed">
+          Buyers contact you on WhatsApp. Without a number,
+          buyers <strong class="text-green-700">cannot reach you</strong>.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100 flex flex-col gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center text-4xl shrink-0">🔴</div>
+      <div>
+        <h3 class="brand-font text-xl font-black text-gray-800 mb-2">Red Badge — Act Fast</h3>
+        <p class="text-gray-600 text-base leading-relaxed">
+          A <strong class="text-red-600">red badge</strong> means your crop expires in 1–2 days.
+          Lower your price and call nearby buyers immediately.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100 flex flex-col gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center text-4xl shrink-0">🌐</div>
+      <div>
+        <h3 class="brand-font text-xl font-black text-gray-800 mb-2">Use Your Language</h3>
+        <p class="text-gray-600 text-base leading-relaxed">
+          Tap <strong class="text-green-700">🌐 Language</strong> in the top menu
+          to read this site in Hindi, Marathi, Punjabi, Tamil, Telugu and more.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-7 shadow-sm border border-green-100 flex flex-col gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-4xl shrink-0">💰</div>
+      <div>
+        <h3 class="brand-font text-xl font-black text-gray-800 mb-2">Fair Price, Fast Sale</h3>
+        <p class="text-gray-600 text-base leading-relaxed">
+          Check what others charge for the same crop.
+          A <strong class="text-green-700">fair market price</strong> sells in hours, not days.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'marketplace/base.html' %}
+{% load static %}
+
+{% block title %}List Your Crop — KisanBazaar{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'marketplace/css/global.css' %}">
+<div class="max-w-2xl mx-auto">
+
+  <div class="text-center mb-8">
+    <div class="text-7xl mb-3">🧑‍🌾</div>
+    <h1 class="brand-font text-3xl sm:text-4xl font-black text-green-800">
+      List Your Crop
+    </h1>
+    <p class="text-gray-500 text-base sm:text-lg mt-1">
+      Buyers across India will see this immediately.
+    </p>
+  </div>
+
+  <div class="bg-white rounded-3xl shadow-xl border-2 border-green-100 p-6 sm:p-10">
+    <form method="POST" enctype="multipart/form-data" class="space-y-7">
+      {% csrf_token %}
+
+      <div>
+        <label for="{{ form.crop_name.id_for_label }}"
+               class="block font-extrabold text-gray-700 text-lg mb-2">
+          🌿 Crop Name
+        </label>
+        {{ form.crop_name }}
+        {% if form.crop_name.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.crop_name.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.quantity.id_for_label }}"
+               class="block font-extrabold text-gray-700 text-lg mb-2">
+          ⚖️ Quantity (KG)
+        </label>
+
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button type="button" onclick="kbSetQty(this, 50)"
+                  class="kb-chip flex items-center gap-1.5 bg-green-50 border-2 border-green-300
+                         hover:bg-green-100 text-green-800 font-extrabold rounded-2xl
+                         px-4 py-2.5 text-sm transition">
+            🍅 50 kg
+          </button>
+          <button type="button" onclick="kbSetQty(this, 100)"
+                  class="kb-chip flex items-center gap-1.5 bg-green-50 border-2 border-green-300
+                         hover:bg-green-100 text-green-800 font-extrabold rounded-2xl
+                         px-4 py-2.5 text-sm transition">
+            🥔 100 kg
+          </button>
+          <button type="button" onclick="kbSetQty(this, 500)"
+                  class="kb-chip flex items-center gap-1.5 bg-green-50 border-2 border-green-300
+                         hover:bg-green-100 text-green-800 font-extrabold rounded-2xl
+                         px-4 py-2.5 text-sm transition">
+            🌾 500 kg
+          </button>
+          <button type="button" onclick="kbSetQty(this, 1000)"
+                  class="kb-chip flex items-center gap-1.5 bg-yellow-50 border-2 border-yellow-300
+                         hover:bg-yellow-100 text-yellow-800 font-extrabold rounded-2xl
+                         px-4 py-2.5 text-sm transition">
+            🚜 1 Ton
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-400 mb-2">Or type any amount below ↓</p>
+        {{ form.quantity }}
+        {% if form.quantity.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.quantity.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.price.id_for_label }}"
+               class="block font-extrabold text-gray-700 text-lg mb-2">
+          💰 Price per KG (₹)
+        </label>
+        {{ form.price }}
+        {% if form.price.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.price.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.location.id_for_label }}"
+               class="block font-extrabold text-gray-700 text-lg mb-2">
+          📍 Your Location
+        </label>
+        {{ form.location }}
+        {% if form.location.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.location.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.harvest_date.id_for_label }}"
+               class="block font-extrabold text-gray-700 text-xl mb-1">
+          📅&nbsp; Harvest Date
+        </label>
+        <p class="text-gray-400 text-sm mb-3">
+          Expiry is auto-calculated from your crop type when you save.
+        </p>
+
+        <div class="relative">
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-3xl pointer-events-none select-none z-10">
+            📅
+          </div>
+          <input
+            type="date"
+            id="{{ form.harvest_date.id_for_label }}"
+            name="{{ form.harvest_date.html_name }}"
+            class="kb-date-input"
+            {% if form.harvest_date.value %}value="{{ form.harvest_date.value }}"{% endif %}
+          />
+        </div>
+
+        <p id="kb-expiry-hint" class="text-sm text-green-700 font-semibold mt-2 hidden">
+          ✅ Estimated expiry: <span id="kb-expiry-text"></span>
+        </p>
+
+        {% if form.harvest_date.errors %}
+          <p class="text-red-600 text-sm mt-2">{{ form.harvest_date.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.image.id_for_label }}"
+               class="block font-extrabold text-gray-700 text-lg mb-2">
+          📷 Crop Photo
+          <span class="text-gray-400 font-normal text-sm ml-1">
+            (optional — photos get 3× more buyers)
+          </span>
+        </label>
+        {{ form.image }}
+        {% if form.image.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ form.image.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <button type="submit"
+              class="w-full bg-green-700 hover:bg-green-800 text-white brand-font
+                     font-extrabold text-xl sm:text-2xl rounded-2xl py-5 transition shadow-xl">
+        ✅ List My Crop
+      </button>
+
+      <a href="{% url 'farmer_dashboard' %}"
+         class="block text-center text-gray-400 hover:text-gray-600 font-medium text-base transition">
+        ← Back to Dashboard
+      </a>
+
+    </form>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'marketplace/js/global.js' %}"></script>
+<script src="{% static 'marketplace/js/add_product.js' %}"></script>
+{% endblock %}

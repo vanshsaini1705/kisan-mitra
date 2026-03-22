@@ -1,0 +1,324 @@
+{% extends 'marketplace/base.html' %}
+{% load static %}
+
+{% block title %}My Dashboard — KisanBazaar 🧑‍🌾{% endblock %}
+
+{% block content %}
+
+<div id="kb-dashboard">
+
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+    <div>
+      <h1 class="brand-font text-3xl sm:text-4xl font-black text-green-800">
+        👋 Hello, {{ user.username }}!
+      </h1>
+      <p class="text-gray-500 text-base sm:text-lg mt-1">
+        You have <strong class="text-green-700">{{ total_products }}</strong>
+        crop listing{{ total_products|pluralize }}
+      </p>
+    </div>
+    <a href="{% url 'add_product' %}"
+       class="inline-flex items-center justify-center gap-2
+              bg-green-700 hover:bg-green-800 text-white font-extrabold
+              text-base sm:text-lg rounded-2xl px-6 py-4 transition shadow-lg shrink-0 w-full sm:w-auto">
+      ➕ List a Crop
+    </a>
+  </div>
+
+  <!-- ── Coming Soon cards ───────────────────────────────────────── -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+    <div class="coming-soon bg-gradient-to-br from-purple-50 to-indigo-50
+                rounded-2xl border-2 border-indigo-200 p-5 flex items-center gap-4">
+      <span class="text-5xl shrink-0">📈</span>
+      <div>
+        <p class="brand-font text-lg font-bold text-indigo-800">Market ROI Predictor</p>
+        <p class="text-indigo-600 text-sm mt-1">AI-powered price forecasts before you sell.</p>
+      </div>
+    </div>
+    <div class="coming-soon bg-gradient-to-br from-amber-50 to-orange-50
+                rounded-2xl border-2 border-amber-200 p-5 flex items-center gap-4">
+      <span class="text-5xl shrink-0">🗺️</span>
+      <div>
+        <p class="brand-font text-lg font-bold text-amber-800">Find Nearest Warehouse</p>
+        <p class="text-amber-600 text-sm mt-1">Locate certified cold-storage near your village.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Product grid ────────────────────────────────────────────── -->
+  {% if product_data %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+
+      {% for item in product_data %}
+      {% with p=item.product days=item.days urgency=item.urgency emoji=item.emoji %}
+
+        {# Border colour by urgency #}
+        {% if urgency == 'critical' %}
+          <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-red-400 flex flex-col">
+        {% elif urgency == 'warning' %}
+          <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-yellow-400 flex flex-col">
+        {% elif urgency == 'expired' %}
+          <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-gray-300 flex flex-col opacity-70">
+        {% else %}
+          <div class="bg-white rounded-3xl shadow-md card-lift overflow-hidden border-2 border-green-300 flex flex-col">
+        {% endif %}
+
+          {# ── Image / emoji placeholder ── #}
+          {% if p.image %}
+            <div class="w-full h-44 overflow-hidden bg-gray-50">
+              <img src="{{ p.image.url }}"
+                   alt="{{ p.crop_name }}"
+                   class="w-full h-full object-cover"
+                   onerror="this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center bg-green-50\'><span class=\'text-6xl\'>{{ emoji }}</span><span class=\'text-xs text-gray-400 mt-1\'>No photo</span></div>'"
+              />
+            </div>
+          {% else %}
+            {# Pure emoji placeholder — zero external requests #}
+            <div class="w-full h-44 flex flex-col items-center justify-center
+              {% if urgency == 'critical' %}bg-red-50
+              {% elif urgency == 'warning' %}bg-yellow-50
+              {% elif urgency == 'expired' %}bg-gray-100
+              {% else %}bg-green-50{% endif %}">
+              <span class="text-6xl leading-none">{{ emoji }}</span>
+              <span class="text-xs text-gray-400 mt-2 bg-white/70 px-3 py-0.5 rounded-full">No photo</span>
+            </div>
+          {% endif %}
+
+          <div class="p-5 flex flex-col flex-1">
+
+            {# Title + badge #}
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h2 class="brand-font text-xl font-bold text-gray-800 leading-tight">
+                {{ p.crop_name }}
+              </h2>
+              {% if days < 1 %}
+                <span class="badge-expired rounded-full px-2 py-0.5 text-xs font-bold shrink-0">⚫ Expired</span>
+              {% elif urgency == 'critical' %}
+                <span class="badge-critical rounded-full px-2 py-0.5 text-xs font-bold shrink-0">🔴 {{ days }}d</span>
+              {% elif urgency == 'warning' %}
+                <span class="badge-warning rounded-full px-2 py-0.5 text-xs font-bold shrink-0">🟡 {{ days }}d</span>
+              {% else %}
+                <span class="badge-fresh rounded-full px-2 py-0.5 text-xs font-bold shrink-0">🟢 {{ days }}d</span>
+              {% endif %}
+            </div>
+
+            <p class="brand-font text-2xl font-extrabold text-green-700 mb-1">
+              ₹{{ p.price }}<span class="text-gray-400 text-sm font-normal"> /kg</span>
+            </p>
+            <p class="text-gray-600 text-sm mb-1">📦 {{ p.quantity }} kg</p>
+            <p class="text-gray-500 text-sm mb-4">📍 {{ p.location|default_if_none:"—" }}</p>
+
+            <div class="mt-auto space-y-2">
+
+              {# ROI button — data attributes carry all needed info #}
+              <button
+                type="button"
+                class="kb-roi-btn w-full bg-indigo-600 hover:bg-indigo-700 text-white
+                       font-extrabold text-sm rounded-2xl py-3 transition"
+                data-product-id="{{ p.id }}"
+                data-crop-name="{{ p.crop_name }}"
+                data-roi-url="{% url 'roi_predictor' pk=p.id %}"
+              >
+                📈 Predict My ROI
+              </button>
+
+              <form method="POST" action="{% url 'delete_product' p.id %}">
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="kb-delete-btn w-full bg-red-50 hover:bg-red-100 text-red-700
+                         font-extrabold text-sm rounded-2xl py-3 transition border border-red-200"
+                  data-crop-name="{{ p.crop_name }}"
+                >
+                  🗑️ Remove Listing
+                </button>
+              </form>
+
+            </div>
+          </div>
+
+        </div>
+
+      {% endwith %}
+      {% endfor %}
+
+    </div>
+
+  {% else %}
+
+    <div class="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-green-200 shadow-sm">
+      <p class="text-8xl mb-4">🌱</p>
+      <h2 class="brand-font text-3xl font-extrabold text-gray-600 mb-2">No crops listed yet</h2>
+      <p class="text-lg text-gray-400 mb-8">Start selling your harvest — buyers are waiting!</p>
+      <a href="{% url 'add_product' %}"
+         class="inline-block bg-green-700 hover:bg-green-800 text-white font-extrabold
+                text-xl rounded-2xl px-10 py-4 transition shadow-lg">
+        ➕ List Your First Crop
+      </a>
+    </div>
+
+  {% endif %}
+
+</div><!-- #kb-dashboard -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     ROI MODAL
+     Completely self-contained — no external JS file required.
+═══════════════════════════════════════════════════════════════════ -->
+<div id="kb-roi-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="kb-roi-title"
+     style="display:none; position:fixed; inset:0; z-index:9999;
+            align-items:center; justify-content:center;">
+
+  <!-- Backdrop -->
+  <div id="kb-roi-backdrop"
+       style="position:absolute; inset:0; background:rgba(0,0,0,0.55);"
+       onclick="kbCloseROI()"></div>
+
+  <!-- Dialog box -->
+  <div style="position:relative; z-index:1; background:#fff; border-radius:1.5rem;
+              padding:2rem; max-width:520px; width:calc(100% - 2rem);
+              box-shadow:0 25px 60px rgba(0,0,0,.22);">
+
+    <!-- Close button -->
+    <button onclick="kbCloseROI()"
+            type="button"
+            aria-label="Close"
+            style="position:absolute; top:1rem; right:1rem; background:none; border:none;
+                   font-size:1.5rem; line-height:1; cursor:pointer; color:#9ca3af;
+                   padding:.25rem .5rem; border-radius:.5rem;"
+            onmouseover="this.style.color='#374151'"
+            onmouseout="this.style.color='#9ca3af'">✕</button>
+
+    <h2 id="kb-roi-title"
+        class="brand-font text-xl font-black text-green-800 mb-4 pr-8">
+      📈 ROI Forecast — <span id="kb-roi-crop"></span>
+    </h2>
+
+    <!-- States -->
+    <div id="kb-roi-spinner" class="flex items-center gap-3 text-gray-500 text-sm py-2">
+      <svg class="animate-spin h-5 w-5 text-indigo-500 shrink-0"
+           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10"
+                stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      Fetching market analysis…
+    </div>
+
+    <p id="kb-roi-result"
+       style="display:none"
+       class="text-gray-700 text-base leading-relaxed"></p>
+
+    <p id="kb-roi-error"
+       style="display:none"
+       class="text-red-600 text-sm font-semibold"></p>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   KISANBAZAAR — FARMER DASHBOARD
+   Handles: ROI modal fetch + open/close, delete confirmation
+   Zero dependencies — vanilla JS only.
+══════════════════════════════════════════════════════════════════════ */
+
+/* ── Helpers ─────────────────────────────────────────────────── */
+function kbGetCsrf() {
+  var m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+/* ── ROI modal state ─────────────────────────────────────────── */
+var kbROIModal    = document.getElementById('kb-roi-modal');
+var kbROISpinner  = document.getElementById('kb-roi-spinner');
+var kbROIResult   = document.getElementById('kb-roi-result');
+var kbROIError    = document.getElementById('kb-roi-error');
+var kbROICrop     = document.getElementById('kb-roi-crop');
+
+function kbOpenROI(cropName) {
+  /* Reset all states */
+  kbROICrop.textContent        = cropName;
+  kbROISpinner.style.display   = 'flex';
+  kbROIResult.style.display    = 'none';
+  kbROIError.style.display     = 'none';
+  kbROIResult.textContent      = '';
+  kbROIError.textContent       = '';
+
+  /* Show modal using flex so it centres correctly */
+  kbROIModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function kbCloseROI() {
+  kbROIModal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/* Close on Escape key */
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') kbCloseROI();
+});
+
+/* ── ROI fetch ───────────────────────────────────────────────── */
+function kbFetchROI(roiUrl, cropName) {
+  kbOpenROI(cropName);
+
+  fetch(roiUrl, {
+    method: 'GET',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    credentials: 'same-origin',
+  })
+  .then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function (data) {
+    kbROISpinner.style.display = 'none';
+    if (data.success && data.analysis) {
+      kbROIResult.textContent   = data.analysis;
+      kbROIResult.style.display = 'block';
+    } else {
+      kbROIError.textContent   = data.error || 'Could not fetch analysis. Try again.';
+      kbROIError.style.display = 'block';
+    }
+  })
+  .catch(function (err) {
+    kbROISpinner.style.display = 'none';
+    kbROIError.textContent   = 'Network error — please check your connection and try again.';
+    kbROIError.style.display = 'block';
+    console.error('ROI fetch error:', err);
+  });
+}
+
+/* ── Wire up ROI buttons ─────────────────────────────────────── */
+document.querySelectorAll('.kb-roi-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var roiUrl   = btn.getAttribute('data-roi-url');
+    var cropName = btn.getAttribute('data-crop-name');
+    kbFetchROI(roiUrl, cropName);
+  });
+});
+
+/* ── Wire up delete confirmations ────────────────────────────── */
+document.querySelectorAll('.kb-delete-btn').forEach(function (btn) {
+  btn.addEventListener('click', function (e) {
+    var cropName = btn.getAttribute('data-crop-name') || 'this crop';
+    if (!confirm('Remove "' + cropName + '" from your listings? This cannot be undone.')) {
+      e.preventDefault();
+    }
+  });
+});
+</script>
+{% endblock %}

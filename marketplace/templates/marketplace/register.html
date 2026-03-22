@@ -1,0 +1,168 @@
+{% extends 'marketplace/base.html' %}
+{% load static %}
+
+{% block title %}Register — KisanBazaar 📝{% endblock %}
+
+{% block extra_head %}
+<style>
+  .kb-auth-wrap { min-height: calc(100vh - 4rem); }
+  .role-pill-active-farmer {
+    border-color: #15803d !important;
+    background:   #dcfce7 !important;
+    box-shadow:   0 0 0 3px rgba(21,128,61,.2);
+  }
+  .role-pill-active-buyer {
+    border-color: #2563eb !important;
+    background:   #dbeafe !important;
+    box-shadow:   0 0 0 3px rgba(37,99,235,.2);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="kb-auth-wrap -mx-4 sm:-mx-6 lg:-mx-8 -my-8 flex">
+
+  <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+    <div class="grid grid-cols-2 w-full h-full gap-0.5">
+      <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80"
+           alt="Indian farmer tending crops" class="w-full h-full object-cover" />
+      <img src="https://images.unsplash.com/photo-1589927986089-35812388d1f4?w=800&q=80"
+           alt="Fresh vegetables" class="w-full h-full object-cover" />
+      <img src="https://images.unsplash.com/photo-1592982537447-6f23b2a24683?w=800&q=80"
+           alt="Harvest season" class="w-full h-full object-cover" />
+      <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800&q=80"
+           alt="Rural market" class="w-full h-full object-cover" />
+    </div>
+    <div class="absolute inset-0 flex flex-col items-center justify-end pb-14 px-10 text-center"
+         style="background:linear-gradient(to top,rgba(20,83,45,.88) 0%,rgba(20,83,45,.3) 55%,transparent 100%);">
+      <a href="{% url 'home' %}" class="brand-font text-5xl font-black text-white drop-shadow-lg mb-3">
+        🌾 KisanBazaar
+      </a>
+      <p class="text-green-200 text-lg max-w-xs leading-relaxed">
+        Join thousands of farmers already selling direct. Free to join. Better prices. Always.
+      </p>
+      <div class="flex gap-4 mt-5 text-white/80 text-sm font-semibold flex-wrap justify-center">
+        <span>✅ Free to Join</span>
+        <span>💰 Better Prices</span>
+        <span>📱 Mobile Friendly</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 sm:px-12 py-12 bg-amber-50 overflow-y-auto">
+
+    <div class="lg:hidden mb-6 text-center">
+      <a href="{% url 'home' %}" class="brand-font text-4xl font-black text-green-800">🌾 KisanBazaar</a>
+    </div>
+
+    <div class="w-full max-w-md">
+
+      <div class="text-center mb-6">
+        <div class="text-6xl mb-3">📝</div>
+        <h1 class="brand-font text-3xl sm:text-4xl font-black text-green-800">Join KisanBazaar</h1>
+        <p class="text-gray-500 mt-1 text-base sm:text-lg">Create your free account in seconds</p>
+      </div>
+
+      <div class="flex gap-3 mb-6">
+        <button type="button" id="pill-farmer" onclick="kbSelectRole('farmer')"
+                class="flex-1 flex flex-col items-center gap-1.5 py-5 rounded-2xl border-2
+                       border-green-300 bg-white font-bold text-green-800 text-sm
+                       transition cursor-pointer hover:bg-green-50">
+          <span class="text-4xl">🧑‍🌾</span>
+          <span class="text-base font-extrabold">I'm a Farmer</span>
+          <span class="text-xs text-gray-400">I want to sell crops</span>
+        </button>
+        <button type="button" id="pill-buyer" onclick="kbSelectRole('buyer')"
+                class="flex-1 flex flex-col items-center gap-1.5 py-5 rounded-2xl border-2
+                       border-blue-300 bg-white font-bold text-blue-800 text-sm
+                       transition cursor-pointer hover:bg-blue-50">
+          <span class="text-4xl">🛒</span>
+          <span class="text-base font-extrabold">I'm a Buyer</span>
+          <span class="text-xs text-gray-400">I want to buy crops</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'register' %}"
+            class="bg-white rounded-3xl shadow-xl border border-green-100 p-8 space-y-4">
+        {% csrf_token %}
+
+        <div class="hidden">
+          {{ form.role }}
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-2 text-lg">👤 Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-2 text-lg">
+            📞 Phone Number
+            <span class="text-gray-400 font-normal text-sm ml-1">(for WhatsApp orders)</span>
+          </label>
+          {{ form.phone }}
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-2 text-lg">🔒 Password</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-2 text-lg">🔒 Confirm Password</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+                class="w-full brand-font bg-green-700 hover:bg-green-800 text-white
+                       font-extrabold text-xl sm:text-2xl rounded-2xl py-4 transition shadow-lg">
+          ✅ Create My Account
+        </button>
+
+      </form>
+
+      <p class="text-center text-gray-500 text-base mt-6">
+        Already have an account?
+        <a href="{% url 'login' %}" class="text-green-700 font-bold hover:underline">Login →</a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var kbRoleInput = document.getElementById('id_role');
+
+function kbSelectRole(role) {
+  if (kbRoleInput) { kbRoleInput.value = role; }
+
+  var fp = document.getElementById('pill-farmer');
+  var bp = document.getElementById('pill-buyer');
+
+  if (fp) { fp.classList.remove('role-pill-active-farmer'); }
+  if (bp) { bp.classList.remove('role-pill-active-buyer'); }
+
+  if (role === 'farmer' && fp) {
+    fp.classList.add('role-pill-active-farmer');
+  } else if (bp) {
+    bp.classList.add('role-pill-active-buyer');
+  }
+}
+
+kbSelectRole('buyer');
+</script>
+{% endblock %}

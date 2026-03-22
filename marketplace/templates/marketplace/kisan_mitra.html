@@ -1,0 +1,248 @@
+{% extends 'marketplace/base.html' %}
+{% block title %}Kisan Mitra — Your AI Farming Assistant 🤖{% endblock %}
+
+{% block main_class %}p-0{% endblock %}
+
+{% block content %}
+
+<div class="flex flex-col h-[calc(100vh-3.5rem)]"
+     style="background:linear-gradient(180deg,#f0fdf4 0%,#fdf8f0 100%);">
+
+  {# ── HEADER ─────────────────────────────────────────────────────── #}
+  <div class="shrink-0 bg-gradient-to-r from-green-800 to-green-700 px-4 sm:px-6 py-4
+              flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center
+                  text-2xl shadow-inner">🤖</div>
+      <div>
+        <h1 class="brand-font text-xl sm:text-2xl font-black text-white leading-tight">
+          Kisan Mitra
+        </h1>
+        <p class="text-green-300 text-xs sm:text-sm">
+          {% if ai_enabled %}
+            <span class="inline-block w-2 h-2 rounded-full bg-green-400 mr-1"></span>
+            Online — Ask me anything about farming
+          {% else %}
+            <span class="inline-block w-2 h-2 rounded-full bg-orange-400 mr-1"></span>
+            Setup required — Add GEMINI_API_KEY to .env
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    <a href="{% url 'farmer_dashboard' %}"
+       class="text-green-300 hover:text-white text-sm font-semibold transition">
+      ← Dashboard
+    </a>
+  </div>
+
+  {# ── SUGGESTED QUESTIONS (shown when chat is empty) ────────────── #}
+  <div id="km-suggestions" class="shrink-0 px-4 sm:px-6 pt-4">
+    <p class="text-gray-500 text-sm font-semibold mb-3">💡 Try asking:</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="km-suggestion bg-white border border-green-300 text-green-800 text-sm font-semibold rounded-full px-4 py-2 hover:bg-green-50 transition shadow-sm" data-text="Tomato ka sahi bhav kya hai?">Tomato ka sahi bhav kya hai?</button>
+      <button type="button" class="km-suggestion bg-white border border-green-300 text-green-800 text-sm font-semibold rounded-full px-4 py-2 hover:bg-green-50 transition shadow-sm" data-text="Pyaaz ko storage mein kitne din rakh sakte hain?">Pyaaz ko storage mein kitne din rakh sakte hain?</button>
+      <button type="button" class="km-suggestion bg-white border border-green-300 text-green-800 text-sm font-semibold rounded-full px-4 py-2 hover:bg-green-50 transition shadow-sm" data-text="PM-KISAN scheme kya hai?">PM-KISAN scheme kya hai?</button>
+      <button type="button" class="km-suggestion bg-white border border-green-300 text-green-800 text-sm font-semibold rounded-full px-4 py-2 hover:bg-green-50 transition shadow-sm" data-text="Fasal bima kaise milega?">Fasal bima kaise milega?</button>
+      <button type="button" class="km-suggestion bg-white border border-green-300 text-green-800 text-sm font-semibold rounded-full px-4 py-2 hover:bg-green-50 transition shadow-sm" data-text="Apni fasal online kaise bechu?">Apni fasal online kaise bechu?</button>
+    </div>
+  </div>
+
+  {# ── CHAT MESSAGES ───────────────────────────────────────────────── #}
+  <div id="km-messages"
+       class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4"
+       aria-live="polite" aria-label="Chat messages">
+
+    {# Welcome message #}
+    <div class="flex items-start gap-3">
+      <div class="w-9 h-9 rounded-full bg-green-700 flex items-center justify-center
+                  text-lg shrink-0 shadow">🤖</div>
+      <div class="max-w-[85%] bg-white rounded-3xl rounded-tl-sm px-5 py-4 shadow-sm
+                  border border-green-100">
+        <p class="text-gray-800 text-base leading-relaxed">
+          Namaste, <strong>{{ user.username }}</strong>! 🌾<br />
+          Main Kisan Mitra hun — aapka digital kisan sahayak.
+          Fasal bhav, storage, sarkari yojana, ya kuch bhi puchho —
+          main Hinglish mein jawab dunga. Kya sawaal hai aapka?
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  {# ── INPUT BAR ───────────────────────────────────────────────────── #}
+  <div class="shrink-0 bg-white border-t border-green-200 px-4 sm:px-6 py-4 shadow-[0_-4px_12px_rgba(0,0,0,.06)]">
+    <form id="km-form" class="flex gap-3 items-end max-w-4xl mx-auto" novalidate>
+      {% csrf_token %}
+
+      <label for="km-input" class="sr-only">Type your question</label>
+      <textarea
+        id="km-input"
+        rows="1"
+        placeholder="Apna sawaal yahan type karein… (Ask your question)"
+        class="flex-1 resize-none border-2 border-green-300 rounded-2xl px-4 py-3
+               text-base sm:text-lg font-medium focus:outline-none focus:border-green-600
+               focus:ring-2 focus:ring-green-100 transition bg-white leading-snug
+               overflow-hidden"
+        style="min-height:52px;max-height:160px;"
+        aria-label="Your message"
+      ></textarea>
+
+      <button
+        type="submit"
+        id="km-send"
+        class="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-green-700 hover:bg-green-800
+               text-white rounded-2xl flex items-center justify-center
+               transition shadow-md disabled:opacity-50"
+        aria-label="Send message"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <path d="M22 2L11 13"/>
+          <path d="M22 2L15 22 11 13 2 9l20-7z"/>
+        </svg>
+      </button>
+    </form>
+    <p class="text-center text-gray-400 text-xs mt-2">
+      Powered by Gemini AI · Responses may not always be accurate.
+    </p>
+  </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+  var chatUrl     = "{% url 'kisan_mitra_chat' %}";
+  var messagesEl  = document.getElementById('km-messages');
+  var form        = document.getElementById('km-form');
+  var input       = document.getElementById('km-input');
+  var sendBtn     = document.getElementById('km-send');
+  var suggestions = document.getElementById('km-suggestions');
+
+  function getCsrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  input.addEventListener('input', function () {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  });
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  document.querySelectorAll('.km-suggestion').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      input.value = btn.dataset.text;
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+      suggestions.classList.add('hidden');
+    });
+  });
+
+  function appendMessage(role, text) {
+    var isBot  = (role === 'bot');
+    var wrap   = document.createElement('div');
+    wrap.className = 'flex items-start gap-3' + (isBot ? '' : ' flex-row-reverse');
+
+    var avatar = document.createElement('div');
+    avatar.className = 'w-9 h-9 rounded-full flex items-center justify-center '
+                     + 'text-lg shrink-0 shadow '
+                     + (isBot ? 'bg-green-700' : 'bg-indigo-600');
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = isBot ? '🤖' : '👤';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'max-w-[85%] rounded-3xl px-5 py-4 shadow-sm text-base leading-relaxed '
+                     + (isBot
+                        ? 'bg-white border border-green-100 rounded-tl-sm text-gray-800'
+                        : 'bg-green-700 text-white rounded-tr-sm');
+    bubble.innerHTML = text.replace(/\n/g, '<br />');
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return wrap;
+  }
+
+  function showTyping() {
+    var wrap   = document.createElement('div');
+    wrap.id    = 'km-typing';
+    wrap.className = 'flex items-start gap-3';
+
+    var avatar = document.createElement('div');
+    avatar.className = 'w-9 h-9 rounded-full bg-green-700 flex items-center '
+                     + 'justify-center text-lg shrink-0 shadow';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = '🤖';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bg-white border border-green-100 rounded-3xl rounded-tl-sm px-5 py-4 shadow-sm';
+    bubble.innerHTML  = '<span class="flex gap-1 items-center">'
+                      + '<span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0s"></span>'
+                      + '<span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:.15s"></span>'
+                      + '<span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:.3s"></span>'
+                      + '</span>';
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    var el = document.getElementById('km-typing');
+    if (el) el.remove();
+  }
+
+  function sendMessage() {
+    var text = input.value.trim();
+    if (!text) return;
+
+    suggestions.classList.add('hidden');
+    appendMessage('user', text);
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+    showTyping();
+
+    fetch(chatUrl, {
+      method:  'POST',
+      headers: {
+        'Content-Type':     'application/json',
+        'X-CSRFToken':      getCsrf(),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ message: text }),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      removeTyping();
+      appendMessage('bot', data.success ? data.reply : ('Error: ' + (data.error || 'Unknown')));
+    })
+    .catch(function () {
+      removeTyping();
+      appendMessage('bot', 'Network error. Please check your connection and try again.');
+    })
+    .finally(function () {
+      sendBtn.disabled = false;
+      input.focus();
+    });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    sendMessage();
+  });
+</script>
+{% endblock %}

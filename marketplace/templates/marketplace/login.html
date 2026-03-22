@@ -1,0 +1,96 @@
+{% extends 'marketplace/base.html' %}
+
+{% block title %}Login — KisanBazaar 🔑{% endblock %}
+
+{% block extra_head %}
+<style>
+  .kb-auth-wrap { min-height: calc(100vh - 4rem); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="kb-auth-wrap -mx-4 sm:-mx-6 lg:-mx-8 -my-8 flex">
+
+  <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+    <div class="grid grid-cols-2 w-full h-full gap-0.5">
+      <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80"
+           alt="Wheat field" class="w-full h-full object-cover" />
+      <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&q=80"
+           alt="Farming produce" class="w-full h-full object-cover" />
+      <img src="https://images.unsplash.com/photo-1592982537447-6f23b2a24683?w=800&q=80"
+           alt="Indian farmer" class="w-full h-full object-cover" />
+      <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
+           alt="Vegetable market" class="w-full h-full object-cover" />
+    </div>
+    <div class="absolute inset-0 flex flex-col items-center justify-end pb-14 px-10 text-center"
+         style="background:linear-gradient(to top,rgba(20,83,45,.88) 0%,rgba(20,83,45,.3) 55%,transparent 100%);">
+      <a href="{% url 'home' %}" class="brand-font text-5xl font-black text-white drop-shadow-lg mb-3">
+        🌾 KisanBazaar
+      </a>
+      <p class="text-green-200 text-lg max-w-xs leading-relaxed">
+        Connecting India's farmers directly with buyers. No commission. Fair prices.
+      </p>
+      <div class="flex gap-6 mt-5 text-white/80 text-sm font-semibold">
+        <span>🧑‍🌾 Farmers</span>
+        <span>🛒 Buyers</span>
+        <span>💰 Fair Prices</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 sm:px-12 py-14 bg-amber-50">
+
+    <div class="lg:hidden mb-8 text-center">
+      <a href="{% url 'home' %}" class="brand-font text-4xl font-black text-green-800">🌾 KisanBazaar</a>
+    </div>
+
+    <div class="w-full max-w-md">
+
+      <div class="text-center mb-8">
+        <div class="text-6xl mb-3">🔑</div>
+        <h1 class="brand-font text-3xl sm:text-4xl font-black text-green-800">Welcome Back!</h1>
+        <p class="text-gray-500 mt-1 text-base sm:text-lg">Login to your KisanBazaar account</p>
+      </div>
+
+      <form method="POST" action="{% url 'login' %}"
+            class="bg-white rounded-3xl shadow-xl border border-green-100 p-8 space-y-5">
+        {% csrf_token %}
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-2 text-lg">👤 Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-2 text-lg">🔒 Password</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.password.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+                class="w-full brand-font bg-green-700 hover:bg-green-800 text-white
+                       font-extrabold text-xl sm:text-2xl rounded-2xl py-4 transition shadow-lg">
+          🔑 Login
+        </button>
+
+      </form>
+
+      <p class="text-center text-gray-500 text-base mt-6">
+        New to KisanBazaar?
+        <a href="{% url 'register' %}" class="text-green-700 font-bold hover:underline">
+          Create a free account →
+        </a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
